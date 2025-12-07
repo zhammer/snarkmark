@@ -19,18 +19,39 @@ export default async function handler(req: Request, _context: Context) {
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10)));
   const offset = (page - 1) * limit;
+  const search = url.searchParams.get("search")?.trim() || "";
 
   try {
-    const countResult = await pool.query("SELECT COUNT(*) FROM jstor_articles");
-    const total = parseInt(countResult.rows[0].count, 10);
+    let countResult;
+    let result;
 
-    const result = await pool.query<JstorArticle>(
-      `SELECT item_id, title, published_date, creators_string, url, content_type
-       FROM jstor_articles
-       ORDER BY published_date DESC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    );
+    if (search) {
+      const searchPattern = `%${search}%`;
+      countResult = await pool.query(
+        `SELECT COUNT(*) FROM jstor_articles
+         WHERE title ILIKE $1 OR creators_string ILIKE $1`,
+        [searchPattern]
+      );
+      result = await pool.query<JstorArticle>(
+        `SELECT item_id, title, published_date, creators_string, url, content_type
+         FROM jstor_articles
+         WHERE title ILIKE $1 OR creators_string ILIKE $1
+         ORDER BY published_date DESC
+         LIMIT $2 OFFSET $3`,
+        [searchPattern, limit, offset]
+      );
+    } else {
+      countResult = await pool.query("SELECT COUNT(*) FROM jstor_articles");
+      result = await pool.query<JstorArticle>(
+        `SELECT item_id, title, published_date, creators_string, url, content_type
+         FROM jstor_articles
+         ORDER BY published_date DESC
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
+    }
+
+    const total = parseInt(countResult.rows[0].count, 10);
 
     const totalPages = Math.ceil(total / limit);
 

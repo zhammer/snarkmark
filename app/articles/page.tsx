@@ -9,6 +9,7 @@ import type { ArticlesResponse, JstorArticle } from "@/lib/types/api";
 
 export default function Articles() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [articles, setArticles] = useState<JstorArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,14 +18,28 @@ export default function Articles() {
     ArticlesResponse["pagination"] | null
   >(null);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to page 1 when search changes
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     async function fetchArticles() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
-          `/.netlify/functions/articles?page=${page}&limit=24`
-        );
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: "24",
+        });
+        if (debouncedSearch) {
+          params.set("search", debouncedSearch);
+        }
+        const res = await fetch(`/.netlify/functions/articles?${params}`);
         if (!res.ok) throw new Error("Failed to fetch articles");
         const data: ArticlesResponse = await res.json();
         setArticles(data.data);
@@ -36,11 +51,7 @@ export default function Articles() {
       }
     }
     fetchArticles();
-  }, [page]);
-
-  const filteredArticles = articles.filter((a) =>
-    a.title.toLowerCase().includes(search.toLowerCase())
-  );
+  }, [page, debouncedSearch]);
 
   return (
     <div className="space-y-8">
@@ -89,12 +100,12 @@ export default function Articles() {
       {!loading && !error && (
         <>
           <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {filteredArticles.map((article) => (
+            {articles.map((article) => (
               <ArticleCard key={article.item_id} article={article} />
             ))}
           </div>
 
-          {filteredArticles.length === 0 && (
+          {articles.length === 0 && (
             <div className="py-20 text-center">
               <BookOpen className="mx-auto mb-4 h-12 w-12 text-slate-700" />
               <p className="text-slate-500">

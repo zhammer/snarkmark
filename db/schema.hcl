@@ -61,11 +61,11 @@ table "marks" {
   }
   column "note" {
     type = text
-    nullable = true
+    null = true
   }
   column "rating" {
     type = integer
-    nullable = true
+    null = true
   }
   column "liked" {
     type = boolean

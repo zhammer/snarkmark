@@ -3,7 +3,7 @@ import { Pool } from "pg";
 import type { JstorArticle } from "../../lib/types/api";
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.NETLIFY_DATABASE_URL,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -46,12 +46,9 @@ export default async function handler(req: Request, _context: Context) {
     });
   } catch (error) {
     console.error("Database error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

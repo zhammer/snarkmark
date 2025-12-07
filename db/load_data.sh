@@ -5,7 +5,7 @@
 set -e
 
 DB_CONNECTION_STRING="${1:-postgres://postgres:pass@localhost:5432/snarkmark?sslmode=disable}"
-DATA_FILE="${2:-filtered_20s.jsonl}"
+DATA_FILE="${2:-db/filtered.jsonl}"
 
 echo "Loading data from $DATA_FILE into database..."
 

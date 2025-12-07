@@ -3,7 +3,7 @@ import { Pool } from "pg";
 import type { Mark, CreateMarkRequest } from "../../lib/types/api";
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.NETLIFY_DATABASE_URL,
 });
 
 interface DbMark {
@@ -57,7 +57,9 @@ async function handleGet(req: Request) {
   try {
     if (userId) {
       // Get marks for a specific user (with article info and stats)
-      const result = await pool.query<DbMarkWithUser & { title: string; creators_string: string }>(
+      const result = await pool.query<
+        DbMarkWithUser & { title: string; creators_string: string }
+      >(
         `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at,
                 u.username, a.title, a.creators_string
          FROM marks m
@@ -93,17 +95,20 @@ async function handleGet(req: Request) {
 
       const stats = statsResult.rows[0];
 
-      return new Response(JSON.stringify({
-        data: marks,
-        stats: {
-          totalRead: parseInt(stats.total_read, 10),
-          totalLiked: parseInt(stats.total_liked, 10),
-          avgRating: stats.avg_rating ? parseFloat(stats.avg_rating) : null,
-        },
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          data: marks,
+          stats: {
+            totalRead: parseInt(stats.total_read, 10),
+            totalLiked: parseInt(stats.total_liked, 10),
+            avgRating: stats.avg_rating ? parseFloat(stats.avg_rating) : null,
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     } else if (itemId) {
       // Get marks for a specific article
       const result = await pool.query<DbMarkWithUser>(
@@ -126,7 +131,14 @@ async function handleGet(req: Request) {
       });
     } else {
       // Get recent marks across all articles (with article info)
-      const result = await pool.query<DbMarkWithUser & { title: string; creators_string: string; published_date: string; content_type: string }>(
+      const result = await pool.query<
+        DbMarkWithUser & {
+          title: string;
+          creators_string: string;
+          published_date: string;
+          content_type: string;
+        }
+      >(
         `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at,
                 u.username, a.title, a.creators_string, a.published_date, a.content_type
          FROM marks m
@@ -153,10 +165,10 @@ async function handleGet(req: Request) {
     }
   } catch (error) {
     console.error("Database error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 
@@ -199,12 +211,9 @@ async function handlePost(req: Request) {
     });
   } catch (error) {
     console.error("Database error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

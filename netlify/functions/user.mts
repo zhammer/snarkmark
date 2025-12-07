@@ -2,7 +2,7 @@ import type { Context } from "@netlify/functions";
 import { Pool } from "pg";
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.NETLIFY_DATABASE_URL,
 });
 
 interface DbUser {
@@ -25,10 +25,13 @@ export default async function handler(req: Request, _context: Context) {
   const username = url.searchParams.get("username");
 
   if (!username) {
-    return new Response(JSON.stringify({ error: "Missing username parameter" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Missing username parameter" }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   try {
@@ -64,12 +67,9 @@ export default async function handler(req: Request, _context: Context) {
     );
   } catch (error) {
     console.error("Database error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

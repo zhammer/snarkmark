@@ -126,9 +126,9 @@ async function handleGet(req: Request) {
       });
     } else {
       // Get recent marks across all articles (with article info)
-      const result = await pool.query<DbMarkWithUser & { title: string; creators_string: string }>(
+      const result = await pool.query<DbMarkWithUser & { title: string; creators_string: string; published_date: string; content_type: string }>(
         `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at,
-                u.username, a.title, a.creators_string
+                u.username, a.title, a.creators_string, a.published_date, a.content_type
          FROM marks m
          JOIN users u ON m.user_id = u.id
          JOIN jstor_articles a ON m.item_id = a.item_id
@@ -142,6 +142,8 @@ async function handleGet(req: Request) {
         username: row.username,
         article_title: row.title,
         article_creators: row.creators_string,
+        article_published_date: row.published_date,
+        article_content_type: row.content_type,
       }));
 
       return new Response(JSON.stringify({ data: marks }), {

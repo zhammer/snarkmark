@@ -49,4 +49,6 @@ export interface MarkWithUser extends Mark {
 export interface RecentMark extends MarkWithUser {
   article_title: string;
   article_creators: string;
+  article_published_date: string;
+  article_content_type: string;
 }

@@ -91,9 +91,9 @@ export default function Home() {
                   item_id: mark.item_id,
                   title: mark.article_title,
                   creators_string: mark.article_creators,
-                  published_date: "",
+                  published_date: mark.article_published_date,
                   url: "",
-                  content_type: "",
+                  content_type: mark.article_content_type,
                 }}
                 reviewedBy={mark.username}
                 rating={mark.rating}

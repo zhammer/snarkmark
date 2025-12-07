@@ -125,6 +125,7 @@ export default function Home() {
                 }}
                 reviewedBy={mark.username}
                 rating={mark.rating}
+                reviewNote={mark.note}
               />
             ))}
           </div>

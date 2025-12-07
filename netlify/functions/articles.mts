@@ -33,19 +33,25 @@ export default async function handler(req: Request, _context: Context) {
         [searchPattern]
       );
       result = await pool.query<JstorArticle>(
-        `SELECT item_id, title, published_date, creators_string, url, content_type
-         FROM jstor_articles
-         WHERE title ILIKE $1 OR creators_string ILIKE $1
-         ORDER BY published_date DESC
+        `SELECT a.item_id, a.title, a.published_date, a.creators_string, a.url, a.content_type,
+                AVG(m.rating) as avg_rating
+         FROM jstor_articles a
+         LEFT JOIN marks m ON a.item_id = m.item_id
+         WHERE a.title ILIKE $1 OR a.creators_string ILIKE $1
+         GROUP BY a.item_id, a.title, a.published_date, a.creators_string, a.url, a.content_type
+         ORDER BY a.published_date DESC
          LIMIT $2 OFFSET $3`,
         [searchPattern, limit, offset]
       );
     } else {
       countResult = await pool.query("SELECT COUNT(*) FROM jstor_articles");
       result = await pool.query<JstorArticle>(
-        `SELECT item_id, title, published_date, creators_string, url, content_type
-         FROM jstor_articles
-         ORDER BY published_date DESC
+        `SELECT a.item_id, a.title, a.published_date, a.creators_string, a.url, a.content_type,
+                AVG(m.rating) as avg_rating
+         FROM jstor_articles a
+         LEFT JOIN marks m ON a.item_id = m.item_id
+         GROUP BY a.item_id, a.title, a.published_date, a.creators_string, a.url, a.content_type
+         ORDER BY a.published_date DESC
          LIMIT $1 OFFSET $2`,
         [limit, offset]
       );

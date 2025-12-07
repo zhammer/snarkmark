@@ -5,6 +5,7 @@ export interface JstorArticle {
   creators_string: string;
   url: string;
   content_type: string;
+  avg_rating?: number | null;
 }
 
 export interface Pagination {

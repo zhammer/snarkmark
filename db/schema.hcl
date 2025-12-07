@@ -14,6 +14,9 @@ table "jstor_articles" {
   column "creators_string" {
     type = text
   }
+  column "content_type" {
+    type = varchar(50)
+  }
   column "url" {
     type = text
   }

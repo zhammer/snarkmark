@@ -9,6 +9,14 @@ interface ArticleCardProps {
   article: JstorArticle;
 }
 
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(/[\s_-]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export default function ArticleCard({ article }: ArticleCardProps) {
   const colors = [
     "from-blue-900 to-slate-900",
@@ -33,7 +41,10 @@ export default function ArticleCard({ article }: ArticleCardProps) {
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
 
           <div className="relative z-10">
-            <h3 className="line-clamp-5 font-serif font-bold leading-tight text-white">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {toTitleCase(article.content_type)}
+            </p>
+            <h3 className="line-clamp-4 font-serif font-bold leading-tight text-white">
               {article.title}
             </h3>
           </div>
@@ -42,7 +53,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
             <p className="line-clamp-1 text-xs font-medium text-slate-300">
               {article.creators_string}
             </p>
-            <p className="text-xs text-slate-500">{article.published_date}</p>
+            <p className="text-xs text-slate-500">{article.published_date?.slice(0, 4)}</p>
           </div>
         </div>
 

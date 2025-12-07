@@ -25,7 +25,7 @@ export default async function handler(req: Request, _context: Context) {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await pool.query<JstorArticle>(
-      `SELECT item_id, title, published_date, creators_string, url
+      `SELECT item_id, title, published_date, creators_string, url, content_type
        FROM jstor_articles
        ORDER BY published_date DESC
        LIMIT $1 OFFSET $2`,

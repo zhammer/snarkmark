@@ -27,7 +27,7 @@ export default async function handler(req: Request, _context: Context) {
 
   try {
     const result = await pool.query<JstorArticle>(
-      `SELECT item_id, title, published_date, creators_string, url
+      `SELECT item_id, title, published_date, creators_string, url, content_type
        FROM jstor_articles
        WHERE item_id = $1`,
       [id]

@@ -9,7 +9,7 @@ DATA_FILE="${2:-filtered_20s.jsonl}"
 
 echo "Loading data from $DATA_FILE into database..."
 
-jq -r '[.item_id, .title, .published_date, .creators_string, .url] | @tsv' "$DATA_FILE" | \
-  psql "$DB_CONNECTION_STRING" -c "\copy jstor_articles(item_id, title, published_date, creators_string, url) FROM STDIN"
+jq -r '[.item_id, .title, .published_date, .creators_string, .content_type, .url] | @tsv' "$DATA_FILE" | \
+  psql "$DB_CONNECTION_STRING" -c "\copy jstor_articles(item_id, title, published_date, creators_string, content_type, url) FROM STDIN"
 
 echo "Done! Loaded data into jstor_articles table."

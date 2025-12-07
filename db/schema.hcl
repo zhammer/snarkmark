@@ -30,6 +30,12 @@ table "users" {
   column "email" {
     type = text
   }
+  column "username" {
+    type = text
+  }
+  unique "username_unique" {
+    columns = [column.username]
+  }
   unique "email_unique" {
     columns = [column.email]
   }

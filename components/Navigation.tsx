@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, Home, Search } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const links = [
     { href: "/", label: "Home", icon: Home },
     { href: "/articles", label: "Browse", icon: Search },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/profile", label: user ? user.username : "Profile", icon: User },
   ];
 
   const isActive = (href: string) => {
@@ -35,6 +37,7 @@ export default function Navigation() {
             {links.map((link) => {
               const Icon = link.icon;
               const active = isActive(link.href);
+              const isProfile = link.href === "/profile";
               return (
                 <Link
                   key={link.href}
@@ -45,7 +48,13 @@ export default function Navigation() {
                       : "text-slate-400 hover:text-emerald-500"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  {isProfile && user ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-900 text-xs font-bold text-emerald-400">
+                      {user.username[0].toUpperCase()}
+                    </span>
+                  ) : (
+                    <Icon className="h-4 w-4" />
+                  )}
                   <span className="hidden sm:inline">{link.label}</span>
                 </Link>
               );

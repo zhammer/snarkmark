@@ -11,16 +11,19 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Heart, PenTool } from "lucide-react";
-import type { JstorArticle } from "@/lib/types/api";
+import type { JstorArticle, Mark } from "@/lib/types/api";
+import { getStoredUser } from "@/lib/auth";
 
 interface LogReviewModalProps {
   article: JstorArticle;
   trigger?: React.ReactNode;
+  onMarkCreated?: (mark: Mark) => void;
 }
 
 export default function LogReviewModal({
   article,
   trigger,
+  onMarkCreated,
 }: LogReviewModalProps) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -35,16 +38,32 @@ export default function LogReviewModal({
       return;
     }
 
+    const user = getStoredUser();
+    if (!user) {
+      alert("Please log in to mark articles");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // TODO: Implement API call to create review
-      console.log("[UI] Review submitted:", {
-        article_id: article.item_id,
-        rating,
-        content,
-        liked,
+      const response = await fetch("/.netlify/functions/marks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item_id: article.item_id,
+          user_id: user.id,
+          rating,
+          note: content || null,
+          liked,
+        }),
       });
-      alert("Review logged! (Check console for details)");
+
+      if (!response.ok) {
+        throw new Error("Failed to create mark");
+      }
+
+      const { data: mark } = await response.json();
+      onMarkCreated?.(mark);
       setIsOpen(false);
       setRating(0);
       setContent("");

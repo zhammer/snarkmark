@@ -22,3 +22,25 @@ export interface PaginatedResponse<T> {
 }
 
 export type ArticlesResponse = PaginatedResponse<JstorArticle>;
+
+export interface Mark {
+  id: number;
+  item_id: string;
+  user_id: number;
+  note: string | null;
+  rating: number | null;
+  liked: boolean;
+  created_at: string;
+}
+
+export interface CreateMarkRequest {
+  item_id: string;
+  user_id: number;
+  note?: string;
+  rating?: number;
+  liked?: boolean;
+}
+
+export interface MarkWithUser extends Mark {
+  username: string;
+}

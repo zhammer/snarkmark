@@ -1,19 +1,19 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import Link from "next/link";
 import {
-  Calendar,
-  FileText,
   Link as LinkIcon,
   Users,
   Quote,
   Loader2,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LogReviewModal from "@/components/reviews/LogReviewModal";
 import StarRating from "@/components/common/StarRating";
-import type { JstorArticle } from "@/lib/types/api";
+import type { JstorArticle, Mark, MarkWithUser } from "@/lib/types/api";
+import { getStoredUser } from "@/lib/auth";
+import { formatDistanceToNow } from "date-fns";
 
 export default function ArticlePage({
   params,
@@ -22,23 +22,34 @@ export default function ArticlePage({
 }) {
   const { id } = use(params);
   const [article, setArticle] = useState<JstorArticle | null>(null);
+  const [marks, setMarks] = useState<MarkWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchArticle() {
+    async function fetchData() {
       try {
-        const res = await fetch(`/.netlify/functions/article?id=${id}`);
-        if (!res.ok) {
-          if (res.status === 404) {
+        const [articleRes, marksRes] = await Promise.all([
+          fetch(`/.netlify/functions/article?id=${id}`),
+          fetch(`/.netlify/functions/marks?item_id=${id}`),
+        ]);
+
+        if (!articleRes.ok) {
+          if (articleRes.status === 404) {
             setError("Article not found");
           } else {
             throw new Error("Failed to fetch");
           }
           return;
         }
-        const data = await res.json();
-        setArticle(data.data);
+
+        const articleData = await articleRes.json();
+        setArticle(articleData.data);
+
+        if (marksRes.ok) {
+          const marksData = await marksRes.json();
+          setMarks(marksData.data);
+        }
       } catch (err) {
         setError("Failed to load article");
         console.error(err);
@@ -46,8 +57,16 @@ export default function ArticlePage({
         setLoading(false);
       }
     }
-    fetchArticle();
+    fetchData();
   }, [id]);
+
+  const handleMarkCreated = (mark: Mark) => {
+    const user = getStoredUser();
+    if (user) {
+      const markWithUser: MarkWithUser = { ...mark, username: user.username };
+      setMarks((prev) => [markWithUser, ...prev]);
+    }
+  };
 
   if (loading) {
     return (
@@ -99,7 +118,7 @@ export default function ArticlePage({
           </div>
 
           <div className="space-y-3">
-            <LogReviewModal article={article} />
+            <LogReviewModal article={article} onMarkCreated={handleMarkCreated} />
 
             {article.url && (
               <a
@@ -141,21 +160,55 @@ export default function ArticlePage({
             </div>
           </div>
 
-          {/* Reviews Section - placeholder for now */}
+          {/* Reviews Section */}
           <div className="border-t border-slate-800 pt-8">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">
-                Reviews
+                Marks ({marks.length})
               </h3>
             </div>
 
-            <div className="rounded-lg border border-dashed border-slate-800 bg-[#1b2228] p-8 text-center">
-              <Quote className="mx-auto mb-3 h-8 w-8 text-slate-700" />
-              <p className="mb-4 text-slate-500">
-                No reviews yet. Be the first to share your thoughts.
-              </p>
-              <LogReviewModal article={article} />
-            </div>
+            {marks.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-800 bg-[#1b2228] p-8 text-center">
+                <Quote className="mx-auto mb-3 h-8 w-8 text-slate-700" />
+                <p className="mb-4 text-slate-500">
+                  No marks yet. Be the first to share your thoughts.
+                </p>
+                <LogReviewModal article={article} onMarkCreated={handleMarkCreated} />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {marks.map((mark) => (
+                  <div
+                    key={mark.id}
+                    className="rounded-lg border border-slate-800 bg-[#1b2228] p-4"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+                          {mark.username[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">{mark.username}</p>
+                          <p className="text-xs text-slate-500">
+                            {formatDistanceToNow(new Date(mark.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {mark.rating && <StarRating rating={mark.rating} size="sm" />}
+                        {mark.liked && (
+                          <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
+                        )}
+                      </div>
+                    </div>
+                    {mark.note && (
+                      <p className="mt-3 text-sm text-slate-300">{mark.note}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

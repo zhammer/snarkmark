@@ -1,0 +1,137 @@
+import type { Context } from "@netlify/functions";
+import { Pool } from "pg";
+import type { Mark, CreateMarkRequest } from "../../lib/types/api";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+interface DbMark {
+  id: number;
+  item_id: string;
+  user_id: number;
+  note: string | null;
+  rating: number | null;
+  liked: boolean;
+  created_at: Date;
+}
+
+interface DbMarkWithUser extends DbMark {
+  username: string;
+}
+
+function dbMarkToMark(dbMark: DbMark): Mark {
+  return {
+    id: dbMark.id,
+    item_id: dbMark.item_id,
+    user_id: dbMark.user_id,
+    note: dbMark.note,
+    rating: dbMark.rating,
+    liked: dbMark.liked,
+    created_at: dbMark.created_at.toISOString(),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default async function handler(req: Request, _context: Context) {
+  if (req.method === "GET") {
+    return handleGet(req);
+  }
+
+  if (req.method === "POST") {
+    return handlePost(req);
+  }
+
+  return new Response(JSON.stringify({ error: "Method not allowed" }), {
+    status: 405,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+async function handleGet(req: Request) {
+  const url = new URL(req.url);
+  const itemId = url.searchParams.get("item_id");
+
+  if (!itemId) {
+    return new Response(
+      JSON.stringify({ error: "Missing required parameter: item_id" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  try {
+    const result = await pool.query<DbMarkWithUser>(
+      `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at, u.username
+       FROM marks m
+       JOIN users u ON m.user_id = u.id
+       WHERE m.item_id = $1
+       ORDER BY m.created_at DESC`,
+      [itemId]
+    );
+
+    const marks = result.rows.map((row) => ({
+      ...dbMarkToMark(row),
+      username: row.username,
+    }));
+
+    return new Response(JSON.stringify({ data: marks }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Database error:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+async function handlePost(req: Request) {
+  let body: CreateMarkRequest;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const { item_id, user_id, note, rating, liked } = body;
+
+  if (!item_id || !user_id) {
+    return new Response(
+      JSON.stringify({ error: "Missing required fields: item_id and user_id" }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  try {
+    const result = await pool.query<DbMark>(
+      `INSERT INTO marks (item_id, user_id, note, rating, liked)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, item_id, user_id, note, rating, liked, created_at`,
+      [item_id, user_id, note || null, rating || null, liked ?? false]
+    );
+
+    const mark = dbMarkToMark(result.rows[0]);
+
+    return new Response(JSON.stringify({ data: mark }), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Database error:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+}

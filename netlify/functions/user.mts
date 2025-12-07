@@ -23,6 +23,7 @@ export default async function handler(req: Request, _context: Context) {
 
   const url = new URL(req.url);
   const username = url.searchParams.get("username");
+  const viewOnly = url.searchParams.get("view_only") === "true";
 
   if (!username) {
     return new Response(
@@ -41,8 +42,16 @@ export default async function handler(req: Request, _context: Context) {
       [username]
     );
 
-    // If user doesn't exist, create them
+    // If user doesn't exist
     if (result.rows.length === 0) {
+      // In view_only mode, return 404 instead of creating
+      if (viewOnly) {
+        return new Response(JSON.stringify({ error: "User not found" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      // Otherwise, create the user (for login flow)
       result = await pool.query<DbUser>(
         `INSERT INTO users (username) VALUES ($1) RETURNING id, username, email, created_at`,
         [username]

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import Link from "next/link";
 import { Link as LinkIcon, Users, Quote, Loader2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LogReviewModal from "@/components/reviews/LogReviewModal";
@@ -184,12 +185,15 @@ export default function ArticlePage({
                     className="rounded-lg border border-slate-800 bg-[#1b2228] p-4"
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+                      <Link
+                      href={`/users/${encodeURIComponent(mark.username)}`}
+                      className="flex items-center gap-3 group/user"
+                    >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white transition-colors group-hover/user:bg-emerald-900 group-hover/user:text-emerald-400">
                           {mark.username[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-white group-hover/user:text-emerald-400 transition-colors">
                             {mark.username}
                           </p>
                           <p className="text-xs text-slate-500">
@@ -198,7 +202,7 @@ export default function ArticlePage({
                             })}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                       <div className="flex items-center gap-2">
                         {mark.rating && (
                           <StarRating rating={mark.rating} size="sm" />

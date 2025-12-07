@@ -1,0 +1,63 @@
+import type { Context } from "@netlify/functions";
+import { Pool } from "pg";
+import type { JstorArticle, ArticlesResponse } from "../../lib/types/api";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default async function handler(req: Request, _context: Context) {
+  if (req.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const url = new URL(req.url);
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10)));
+  const offset = (page - 1) * limit;
+
+  try {
+    const countResult = await pool.query("SELECT COUNT(*) FROM jstor_articles");
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const result = await pool.query<JstorArticle>(
+      `SELECT item_id, title, published_date, creators_string, url
+       FROM jstor_articles
+       ORDER BY published_date DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    const totalPages = Math.ceil(total / limit);
+
+    const response: ArticlesResponse = {
+      data: result.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Database error:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};

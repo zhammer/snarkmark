@@ -51,10 +51,60 @@ export default async function handler(req: Request, _context: Context) {
 async function handleGet(req: Request) {
   const url = new URL(req.url);
   const itemId = url.searchParams.get("item_id");
+  const userId = url.searchParams.get("user_id");
   const limit = parseInt(url.searchParams.get("limit") || "10", 10);
 
   try {
-    if (itemId) {
+    if (userId) {
+      // Get marks for a specific user (with article info and stats)
+      const result = await pool.query<DbMarkWithUser & { title: string; creators_string: string }>(
+        `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at,
+                u.username, a.title, a.creators_string
+         FROM marks m
+         JOIN users u ON m.user_id = u.id
+         JOIN jstor_articles a ON m.item_id = a.item_id
+         WHERE m.user_id = $1
+         ORDER BY m.created_at DESC
+         LIMIT $2`,
+        [userId, limit]
+      );
+
+      const marks = result.rows.map((row) => ({
+        ...dbMarkToMark(row),
+        username: row.username,
+        article_title: row.title,
+        article_creators: row.creators_string,
+      }));
+
+      // Get stats for the user
+      const statsResult = await pool.query<{
+        total_read: string;
+        total_liked: string;
+        avg_rating: string | null;
+      }>(
+        `SELECT
+           COUNT(*) as total_read,
+           COUNT(*) FILTER (WHERE liked = true) as total_liked,
+           AVG(rating) FILTER (WHERE rating IS NOT NULL) as avg_rating
+         FROM marks
+         WHERE user_id = $1`,
+        [userId]
+      );
+
+      const stats = statsResult.rows[0];
+
+      return new Response(JSON.stringify({
+        data: marks,
+        stats: {
+          totalRead: parseInt(stats.total_read, 10),
+          totalLiked: parseInt(stats.total_liked, 10),
+          avgRating: stats.avg_rating ? parseFloat(stats.avg_rating) : null,
+        },
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else if (itemId) {
       // Get marks for a specific article
       const result = await pool.query<DbMarkWithUser>(
         `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at, u.username

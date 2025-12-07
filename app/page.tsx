@@ -66,34 +66,6 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Popular / Recent Articles Grid */}
-      <section>
-        <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-2">
-          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400">
-            <TrendingUp className="h-4 w-4 text-emerald-500" /> Popular This
-            Week
-          </h2>
-          <Link
-            href="/articles"
-            className="text-xs font-bold uppercase text-slate-500 transition-colors hover:text-white"
-          >
-            More
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-6">
-            {articles.map((article) => (
-              <ArticleCard key={article.item_id} article={article} />
-            ))}
-          </div>
-        )}
-      </section>
-
       {/* Just Reviewed */}
       <section>
         <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-2">
@@ -127,6 +99,34 @@ export default function Home() {
                 rating={mark.rating}
                 reviewNote={mark.note}
               />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Popular / Recent Articles Grid */}
+      <section>
+        <div className="mb-6 flex items-center justify-between border-b border-slate-800 pb-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-400">
+            <TrendingUp className="h-4 w-4 text-emerald-500" /> Popular This
+            Week
+          </h2>
+          <Link
+            href="/articles"
+            className="text-xs font-bold uppercase text-slate-500 transition-colors hover:text-white"
+          >
+            More
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-6">
+            {articles.map((article) => (
+              <ArticleCard key={article.item_id} article={article} />
             ))}
           </div>
         )}

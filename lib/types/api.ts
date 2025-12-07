@@ -44,3 +44,8 @@ export interface CreateMarkRequest {
 export interface MarkWithUser extends Mark {
   username: string;
 }
+
+export interface RecentMark extends MarkWithUser {
+  article_title: string;
+  article_creators: string;
+}

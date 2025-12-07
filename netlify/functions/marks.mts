@@ -51,33 +51,54 @@ export default async function handler(req: Request, _context: Context) {
 async function handleGet(req: Request) {
   const url = new URL(req.url);
   const itemId = url.searchParams.get("item_id");
-
-  if (!itemId) {
-    return new Response(
-      JSON.stringify({ error: "Missing required parameter: item_id" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
+  const limit = parseInt(url.searchParams.get("limit") || "10", 10);
 
   try {
-    const result = await pool.query<DbMarkWithUser>(
-      `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at, u.username
-       FROM marks m
-       JOIN users u ON m.user_id = u.id
-       WHERE m.item_id = $1
-       ORDER BY m.created_at DESC`,
-      [itemId]
-    );
+    if (itemId) {
+      // Get marks for a specific article
+      const result = await pool.query<DbMarkWithUser>(
+        `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at, u.username
+         FROM marks m
+         JOIN users u ON m.user_id = u.id
+         WHERE m.item_id = $1
+         ORDER BY m.created_at DESC`,
+        [itemId]
+      );
 
-    const marks = result.rows.map((row) => ({
-      ...dbMarkToMark(row),
-      username: row.username,
-    }));
+      const marks = result.rows.map((row) => ({
+        ...dbMarkToMark(row),
+        username: row.username,
+      }));
 
-    return new Response(JSON.stringify({ data: marks }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+      return new Response(JSON.stringify({ data: marks }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      // Get recent marks across all articles (with article info)
+      const result = await pool.query<DbMarkWithUser & { title: string; creators_string: string }>(
+        `SELECT m.id, m.item_id, m.user_id, m.note, m.rating, m.liked, m.created_at,
+                u.username, a.title, a.creators_string
+         FROM marks m
+         JOIN users u ON m.user_id = u.id
+         JOIN jstor_articles a ON m.item_id = a.item_id
+         ORDER BY m.created_at DESC
+         LIMIT $1`,
+        [limit]
+      );
+
+      const marks = result.rows.map((row) => ({
+        ...dbMarkToMark(row),
+        username: row.username,
+        article_title: row.title,
+        article_creators: row.creators_string,
+      }));
+
+      return new Response(JSON.stringify({ data: marks }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   } catch (error) {
     console.error("Database error:", error);
     return new Response(

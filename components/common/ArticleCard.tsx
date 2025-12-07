@@ -7,6 +7,8 @@ import type { JstorArticle } from "@/lib/types/api";
 
 interface ArticleCardProps {
   article: JstorArticle;
+  reviewedBy?: string;
+  rating?: number | null;
 }
 
 function toTitleCase(str: string): string {
@@ -18,7 +20,7 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
-export default function ArticleCard({ article }: ArticleCardProps) {
+export default function ArticleCard({ article, reviewedBy, rating }: ArticleCardProps) {
   const colors = [
     "from-blue-900 to-slate-900",
     "from-emerald-900 to-slate-900",
@@ -28,7 +30,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   ];
   const colorIndex = article.title.length % colors.length;
   const bgGradient = colors[colorIndex];
-  const avgRating = 3; // Placeholder for average rating
+  const displayRating = rating ?? 3; // Use provided rating or placeholder
 
   return (
     <Link href={`/articles/${article.item_id}`}>
@@ -60,15 +62,18 @@ export default function ArticleCard({ article }: ArticleCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-1">
+        <div className="px-1">
           <div className="flex items-center gap-1 text-xs text-slate-400">
-            {avgRating > 0 && (
+            {displayRating > 0 && (
               <>
-                <StarRating rating={avgRating} />
-                <span>({avgRating.toFixed(1)})</span>
+                <StarRating rating={displayRating} />
+                <span>({displayRating.toFixed(1)})</span>
               </>
             )}
           </div>
+          {reviewedBy && (
+            <p className="mt-1 truncate text-xs text-slate-500">by {reviewedBy}</p>
+          )}
         </div>
       </motion.div>
     </Link>

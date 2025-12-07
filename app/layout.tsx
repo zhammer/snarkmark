@@ -5,7 +5,7 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Snarkmark",
-  description: "Track the knowledge you consume",
+  description: "Engage with the texts you read.",
 };
 
 export default function RootLayout({

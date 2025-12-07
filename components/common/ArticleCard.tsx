@@ -12,6 +12,7 @@ interface ArticleCardProps {
 function toTitleCase(str: string): string {
   return str
     .toLowerCase()
+    .replace("book_part", "chapter")
     .split(/[\s_-]+/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
@@ -53,7 +54,9 @@ export default function ArticleCard({ article }: ArticleCardProps) {
             <p className="line-clamp-1 text-xs font-medium text-slate-300">
               {article.creators_string}
             </p>
-            <p className="text-xs text-slate-500">{article.published_date?.slice(0, 4)}</p>
+            <p className="text-xs text-slate-500">
+              {article.published_date?.slice(0, 4)}
+            </p>
           </div>
         </div>
 

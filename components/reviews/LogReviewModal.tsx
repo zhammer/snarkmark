@@ -95,7 +95,7 @@ export default function LogReviewModal({
               {article.title}
             </span>
             <span className="text-sm font-normal text-slate-400">
-              {article.published_date}
+              {article.published_date.slice(0, 4)}
             </span>
           </DialogTitle>
         </DialogHeader>

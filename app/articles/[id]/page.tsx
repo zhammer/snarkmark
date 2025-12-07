@@ -1,13 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import {
-  Link as LinkIcon,
-  Users,
-  Quote,
-  Loader2,
-  Heart,
-} from "lucide-react";
+import { Link as LinkIcon, Users, Quote, Loader2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LogReviewModal from "@/components/reviews/LogReviewModal";
 import StarRating from "@/components/common/StarRating";
@@ -118,7 +112,10 @@ export default function ArticlePage({
           </div>
 
           <div className="space-y-3">
-            <LogReviewModal article={article} onMarkCreated={handleMarkCreated} />
+            <LogReviewModal
+              article={article}
+              onMarkCreated={handleMarkCreated}
+            />
 
             {article.url && (
               <a
@@ -148,7 +145,7 @@ export default function ArticlePage({
             <h1 className="font-serif text-3xl font-bold leading-tight text-white md:text-5xl">
               {article.title}{" "}
               <span className="ml-2 font-sans text-2xl font-normal text-slate-500">
-                {article.published_date}
+                {article.published_date.slice(0, 4)}
               </span>
             </h1>
 
@@ -174,7 +171,10 @@ export default function ArticlePage({
                 <p className="mb-4 text-slate-500">
                   No marks yet. Be the first to share your thoughts.
                 </p>
-                <LogReviewModal article={article} onMarkCreated={handleMarkCreated} />
+                <LogReviewModal
+                  article={article}
+                  onMarkCreated={handleMarkCreated}
+                />
               </div>
             ) : (
               <div className="space-y-4">
@@ -189,14 +189,20 @@ export default function ArticlePage({
                           {mark.username[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-white">{mark.username}</p>
+                          <p className="font-medium text-white">
+                            {mark.username}
+                          </p>
                           <p className="text-xs text-slate-500">
-                            {formatDistanceToNow(new Date(mark.created_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(mark.created_at), {
+                              addSuffix: true,
+                            })}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {mark.rating && <StarRating rating={mark.rating} size="sm" />}
+                        {mark.rating && (
+                          <StarRating rating={mark.rating} size="sm" />
+                        )}
                         {mark.liked && (
                           <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
                         )}

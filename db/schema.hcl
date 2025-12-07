@@ -61,6 +61,10 @@ table "marks" {
     type = integer
     nullable = true
   }
+  column "liked" {
+    type = boolean
+    default = false
+  }
   column "created_at" {
     type = timestamp
     default = sql("now()")

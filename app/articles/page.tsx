@@ -1,27 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Filter, BookOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, BookOpen, Loader2 } from "lucide-react";
 import ArticleCard from "@/components/common/ArticleCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/data";
+import type { ArticlesResponse, JstorArticle } from "@/lib/types/api";
 
 export default function Articles() {
   const [search, setSearch] = useState("");
+  const [articles, setArticles] = useState<JstorArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<
+    ArticlesResponse["pagination"] | null
+  >(null);
 
-  const { data: articles } = api.articles.list({ limit: 50 });
-  const { data: reviews } = api.reviews.list();
+  useEffect(() => {
+    async function fetchArticles() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/.netlify/functions/articles?page=${page}&limit=24`
+        );
+        if (!res.ok) throw new Error("Failed to fetch articles");
+        const data: ArticlesResponse = await res.json();
+        setArticles(data.data);
+        setPagination(data.pagination);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchArticles();
+  }, [page]);
 
-  const filteredArticles =
-    articles?.filter(
-      (a) =>
-        a.title.toLowerCase().includes(search.toLowerCase()) ||
-        a.authors?.some((au) =>
-          au.toLowerCase().includes(search.toLowerCase())
-        ) ||
-        a.tags?.some((t) => t.toLowerCase().includes(search.toLowerCase()))
-    ) || [];
+  const filteredArticles = articles.filter((a) =>
+    a.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-8">
@@ -39,7 +58,7 @@ export default function Articles() {
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <Input
-              placeholder="Search titles, authors, tags..."
+              placeholder="Search titles, authors..."
               className="border-slate-700 bg-[#1b2228] pl-9 text-slate-200 focus-visible:ring-emerald-500"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -55,19 +74,61 @@ export default function Articles() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {filteredArticles.map((article) => (
-          <ArticleCard key={article.id} article={article} reviews={reviews} />
-        ))}
-      </div>
-
-      {filteredArticles.length === 0 && (
-        <div className="py-20 text-center">
-          <BookOpen className="mx-auto mb-4 h-12 w-12 text-slate-700" />
-          <p className="text-slate-500">
-            No articles found matching &quot;{search}&quot;
-          </p>
+      {loading && (
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
         </div>
+      )}
+
+      {error && (
+        <div className="py-20 text-center">
+          <p className="text-red-400">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {filteredArticles.map((article) => (
+              <ArticleCard key={article.item_id} article={article} />
+            ))}
+          </div>
+
+          {filteredArticles.length === 0 && (
+            <div className="py-20 text-center">
+              <BookOpen className="mx-auto mb-4 h-12 w-12 text-slate-700" />
+              <p className="text-slate-500">
+                {search
+                  ? `No articles found matching "${search}"`
+                  : "No articles found"}
+              </p>
+            </div>
+          )}
+
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-8">
+              <Button
+                variant="outline"
+                className="border-slate-700 bg-[#1b2228] text-slate-300"
+                disabled={!pagination.hasPrev}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-slate-400">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                className="border-slate-700 bg-[#1b2228] text-slate-300"
+                disabled={!pagination.hasNext}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

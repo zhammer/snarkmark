@@ -3,24 +3,13 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import StarRating from "./StarRating";
-import { Article, Review } from "@/lib/data";
+import type { JstorArticle } from "@/lib/types/api";
 
 interface ArticleCardProps {
-  article: Article;
-  reviews?: Review[];
+  article: JstorArticle;
 }
 
-export default function ArticleCard({
-  article,
-  reviews = [],
-}: ArticleCardProps) {
-  const articleReviews = reviews.filter((r) => r.article_id === article.id);
-  const avgRating =
-    articleReviews.length > 0
-      ? articleReviews.reduce((acc, r) => acc + r.rating, 0) /
-        articleReviews.length
-      : 0;
-
+export default function ArticleCard({ article }: ArticleCardProps) {
   const colors = [
     "from-blue-900 to-slate-900",
     "from-emerald-900 to-slate-900",
@@ -30,9 +19,10 @@ export default function ArticleCard({
   ];
   const colorIndex = article.title.length % colors.length;
   const bgGradient = colors[colorIndex];
+  const avgRating = 3; // Placeholder for average rating
 
   return (
-    <Link href={`/articles/${article.id}`}>
+    <Link href={`/articles/${article.item_id}`}>
       <motion.div
         whileHover={{ y: -5 }}
         className="group relative flex w-full flex-col gap-2"
@@ -43,19 +33,16 @@ export default function ArticleCard({
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
 
           <div className="relative z-10">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              {article.journal}
-            </p>
-            <h3 className="line-clamp-4 font-serif font-bold leading-tight text-white">
+            <h3 className="line-clamp-5 font-serif font-bold leading-tight text-white">
               {article.title}
             </h3>
           </div>
 
           <div className="relative z-10">
             <p className="line-clamp-1 text-xs font-medium text-slate-300">
-              {article.authors?.[0]} et al.
+              {article.creators_string}
             </p>
-            <p className="text-xs text-slate-500">{article.publication_year}</p>
+            <p className="text-xs text-slate-500">{article.published_date}</p>
           </div>
         </div>
 

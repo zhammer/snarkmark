@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Heart, PenTool } from "lucide-react";
-import { api, Article } from "@/lib/data";
+import type { JstorArticle } from "@/lib/types/api";
 
 interface LogReviewModalProps {
-  article: Article;
+  article: JstorArticle;
   trigger?: React.ReactNode;
 }
 
@@ -31,23 +31,19 @@ export default function LogReviewModal({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      console.log("[UI] Please add a rating");
       alert("Please add a rating");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const user = api.auth.me();
-      console.log("[UI] User:", user);
-
-      const review = api.reviews.create({
-        article_id: article.id,
+      // TODO: Implement API call to create review
+      console.log("[UI] Review submitted:", {
+        article_id: article.item_id,
         rating,
         content,
         liked,
       });
-      console.log("[UI] Review created:", review);
       alert("Review logged! (Check console for details)");
       setIsOpen(false);
       setRating(0);
@@ -80,7 +76,7 @@ export default function LogReviewModal({
               {article.title}
             </span>
             <span className="text-sm font-normal text-slate-400">
-              {article.publication_year}
+              {article.published_date}
             </span>
           </DialogTitle>
         </DialogHeader>
